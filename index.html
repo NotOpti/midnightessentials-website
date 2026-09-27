@@ -318,6 +318,10 @@ html:not(.scrub) .story-rail{display:none}
 
 /* ---------- forever band ---------- */
 .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(32px,5vw,80px);align-items:center}
+.upd-split{grid-template-columns:minmax(0,1fr) minmax(0,460px);gap:clamp(32px,4vw,64px)}
+.upd-split>.copy{container-type:inline-size;width:100%}
+.upd-split>:last-child{justify-self:stretch}
+.upd-split h1{font-size:clamp(34px,5.4vw,72px);font-size:clamp(34px,calc(100cqi / 7.9),80px)}
 @media (max-width:900px){.split{grid-template-columns:1fr}}
 .split .copy{display:grid;gap:20px;justify-items:start}
 .ctable-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--panel)}
@@ -962,10 +966,10 @@ html:not(.scrub) .tile .pvb{aspect-ratio:28/15}
 <div class="view" data-route="updater" hidden>
   <section class="page-head">
     <div class="hero-bg" aria-hidden="true"><div class="ugrid"></div></div>
-    <div class="wrap split" style="position:relative;display:grid">
+    <div class="wrap split upd-split" style="position:relative;display:grid">
       <div class="copy" style="display:grid;gap:22px;justify-items:start">
         <p class="eyebrow">Windows app</p>
-        <h1 style="font-size:clamp(44px,6.2vw,80px)">MidnightEssentials <em class="o">Updater</em></h1>
+        <h1>MidnightEssentials <em class="o">Updater</em></h1>
         <p class="lede">Install or update the whole suite in one click. The Updater reads the version you have, checks GitHub for the latest release and swaps only the MidnightEssentials folders.</p>
         <div class="cta-row">
           <a class="btn btn-primary" href="downloads/MidnightEssentialsUpdater.zip" download><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg>Download the Updater</a>

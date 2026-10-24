@@ -10,8 +10,11 @@
   var API = "https://api.github.com/repos/" + REPO + "/releases?per_page=100";
   var RELEASES_PAGE = "https://github.com/" + REPO + "/releases";
   var LATEST_ZIP = "https://github.com/" + REPO + "/releases/latest/download/MidnightEssentials.zip";
-  var CACHE_KEY = "me-releases-v1";
-  var CACHE_FRESH_MS = 10 * 60 * 1000;
+  var CACHE_KEY = "me-releases-v2";
+  // Always ask GitHub. The saved copy is sent as an ETag, so when nothing changed
+  // GitHub answers "304 Not Modified" quickly and it doesn't count against its hourly limit.
+  // The saved copy is only shown when GitHub can't be reached.
+  var CACHE_FRESH_MS = 0;
 
   var root = document.documentElement;
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

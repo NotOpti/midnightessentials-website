@@ -10,6 +10,9 @@
   var API = "https://api.github.com/repos/" + REPO + "/releases?per_page=100";
   var RELEASES_PAGE = "https://github.com/" + REPO + "/releases";
   var LATEST_ZIP = "https://github.com/" + REPO + "/releases/latest/download/MidnightEssentials.zip";
+  var UPDATER_REPO = "NotOpti/MidnightEssentials-Updater";
+  var UPDATER_API = "https://api.github.com/repos/" + UPDATER_REPO + "/releases/latest";
+  var UPDATER_CACHE_KEY = "me-updater-v1";
   var CACHE_KEY = "me-releases-v2";
   // Always ask GitHub. The saved copy is sent as an ETag, so when nothing changed
   // GitHub answers "304 Not Modified" quickly and it doesn't count against its hourly limit.
@@ -125,6 +128,43 @@
       })
       .finally(function () { if (timer) clearTimeout(timer); });
     return releasesPromise;
+  }
+
+  /* ------------------------------------------------------------ the Updater's own latest release
+     The download button already points at releases/latest/download/MidnightEssentialsUpdater.exe,
+     which GitHub always sends to the newest version. This only adds the version number, and
+     follows the .exe if it's ever renamed. */
+
+  function getUpdaterRelease() {
+    var cached = store(UPDATER_CACHE_KEY);
+    var headers = { Accept: "application/vnd.github+json" };
+    if (cached && cached.etag) headers["If-None-Match"] = cached.etag;
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 8000) : null;
+    return fetch(UPDATER_API, { headers: headers, signal: ctrl ? ctrl.signal : undefined })
+      .then(function (res) {
+        if (res.status === 304 && cached) return cached.data;
+        if (!res.ok) throw new Error("GitHub answered " + res.status);
+        var etag = res.headers.get("ETag");
+        return res.json().then(function (data) {
+          store(UPDATER_CACHE_KEY, { etag: etag, data: data });
+          return data;
+        });
+      })
+      .catch(function (err) { if (cached && cached.data) return cached.data; throw err; })
+      .then(function (r) {
+        var exe = null;
+        (r.assets || []).forEach(function (a) {
+          if (/\.exe$/i.test(a.name) && (!exe || /midnightessentialsupdater/i.test(a.name))) exe = a;
+        });
+        return {
+          tag: String(r.tag_name || "").replace(/^v/i, ""),
+          date: r.published_at ? new Date(r.published_at) : null,
+          url: exe ? exe.browser_download_url : null,
+          size: exe ? exe.size : 0
+        };
+      })
+      .finally(function () { if (timer) clearTimeout(timer); });
   }
 
   /* ------------------------------------------------------------ release notes Markdown
@@ -462,7 +502,7 @@
         btn2.classList.add("secondary");
       }
     };
-    addLog("Updater 2.0 ready.", "var(--c-muted)");
+    addLog("Updater ready.", "var(--c-muted)");
 
     btn2.addEventListener("click", function () {
       if (app.classList.contains("busy")) return;
@@ -548,6 +588,22 @@
   }
 
   /* ------------------------------------------------------------ go */
+
+  if ($("[data-updater-download], [data-updater-meta]")) {
+    getUpdaterRelease().then(function (u) {
+      if (u.url) $$("[data-updater-download]").forEach(function (a) { a.href = u.url; });
+      if (u.tag) {
+        $$("[data-updater-meta]").forEach(function (el) {
+          el.textContent = " Version " + u.tag + (u.size ? ", " + (u.size / 1048576).toFixed(1) + " MB" : "") + ".";
+        });
+        var log = $(".app-log");
+        if (log && log.firstChild) {
+          var span = log.firstChild.querySelector("span");
+          if (span) span.textContent = "Updater " + u.tag + " ready.";
+        }
+      }
+    }).catch(function () { /* the button still works: it points at the latest release */ });
+  }
 
   var needsReleases = $("[data-version], [data-download], #pn-list, #app, #latest-notes");
   if (needsReleases) {
